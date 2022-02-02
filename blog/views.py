@@ -70,13 +70,9 @@ def index(request):
     )
     most_fresh_posts = fresh_posts[:5]
 
-<<<<<<< HEAD
     most_popular_tags = (
         Tag.objects.popular()[:5]
     )
-=======
-    most_popular_tags = Tag.objects.popular()[:5]
->>>>>>> 001e29fff50a4763dec7b0bc2de298a056b0fc6f
 
     context = {
         'most_popular_posts': [

@@ -1,6 +1,6 @@
 from django.shortcuts import render
 from blog.models import Comment, Post, Tag
-from django.db.models import Count
+from django.db.models import Count, Prefetch
 
 
 def get_likes_count(post):
@@ -22,7 +22,7 @@ def serialize_post_optimized(post):
         'slug': post.slug,
         'tags': [
             serialize_tag_optimized(tag)
-            for tag in post.tags.all().annotate(posts_count=Count('posts'))
+            for tag in post.tags.all()
         ],
         'first_tag_title': post.tags.all()[0].title,
     }
@@ -59,13 +59,22 @@ def serialize_tag_optimized(tag):
 def index(request):
 
     all_posts = (
-        Post.objects.prefetch_related('author').prefetch_related('tags')
+        Post.objects.prefetch_related(
+            'author',
+            Prefetch(
+                'tags',
+                queryset=Tag.objects.annotate(posts_count=Count('posts')))
+        )
     )
 
     most_popular_posts = (
-        Post.objects.popular().prefetch_related('author')
-                    .prefetch_related('tags')[:5]
-                    .fetch_with_comments_count()
+        Post.objects.popular()[:5].prefetch_related(
+            'author',
+            Prefetch(
+                'tags',
+                queryset=Tag.objects.annotate(posts_count=Count('posts'))
+            )
+        ).fetch_with_comments_count()
     )
     fresh_posts = (
         all_posts.annotate(comments_count=Count('comments'))
@@ -75,6 +84,10 @@ def index(request):
 
     most_popular_tags = (
         Tag.objects.popular()[:5]
+        .prefetch_related(
+            Prefetch('posts',
+                     queryset=Post.objects.annotate(posts_count=Count('id')),)
+        )
     )
 
     context = {

@@ -117,13 +117,13 @@ def tag_filter(request, tag_title):
     )
 
     most_popular_posts = (
-        Post.objects.popular()[:5]
+        Post.objects.popular().select_related('author')[:5]
         .count_posts_in_related_tags()
         .fetch_with_comments_count()
     )
 
     related_posts = (
-        tag.posts.all()[:20]
+        tag.posts.all().select_related('author')[:20]
         .count_posts_in_related_tags()
         .fetch_with_comments_count()
     )
